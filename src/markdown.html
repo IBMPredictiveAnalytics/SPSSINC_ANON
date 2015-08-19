@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>SPSSINC ANON Extension Command</title>
+
+<link rel="stylesheet" type="text/css" href="extsyntax.css" />
+
+
+
+
+
+</head>
+
+<body>
+<h1>SPSSINC ANON Extension Command</h1>
+
+<p>Anonymize a set of variables.</p>
+<div class="syntax">
+<p>SPSSINC ANON  VARIABLES=<em>varnames</em><sup>&#42;</sup>  </p>
+
+<p>/OPTIONS SVALUEROOT=&ldquo;<em>prefix</em>&rdquo; NAMEROOT=<em>nprefix</em><br/>
+METHOD=SEQUENTIAL<sup>&#42;&#42;</sup> or TRANSFORM or RANDOM<br/>
+SEED=<em>number</em> OFFSET=<em>number</em> SCALE=<em>number</em><br/>
+MAXRVALUE=<em>positive integer or list of integers</em><br/>
+ONETOONE=<em>varnames</em><br/>
+MAPPING=<em>&ldquo;input filespec&rdquo;</em>  </p>
+
+<p>/SAVE NAMEMAPPING=&ldquo;<em>filespec</em>&rdquo; VALUEMAPPING=&ldquo;<em>filespec</em>&rdquo;&ldquo;  </p>
+
+<p>/HELP]</p>
+
+<p><sup>&#42;</sup> Required<br/>
+<sup>&#42;&#42;</sup> Default</p>
+</div>
+<p>SPSSINC ANON /HELP displays this help and does nothing else.</p>
+
+<pre class="example"><code>SPSSINC ANON x y z
+/OPTIONS METHOD=RANDOM
+/SAVE VALUEMAPPING=&quot;c:/temp/values.txt&quot;.
+</code></pre>
+
+<p>This command replaces the values of the specified variables with new values
+according to one of three methods.  It is intended for situations where the
+true values must be concealed for privacy or other reasons.  It can also
+replace the variables names with anonymous equivalents.</p>
+
+<p><strong>VARIABLES</strong> specifies the list of variables to anonymize.</p>
+
+<h2>OPTIONS</h2>
+
+<p><strong>METHOD</strong> specifies how to generate the new values. The choices are</p>
+
+<ul>
+<li>SEQUENTIAL replaces each value with a sequential number.  If a value
+recurs for a variable, it gets the same number.</li>
+<li>RANDOM replaces the values with a random integer in the range 0 to MAXRVALUES inclusive.<br/></li>
+<li>TRANSFORM, which applies only to numeric variables, calculates a new value
+according to the formula OFFSET + SCALE &#42; <em>value</em>.  If TRANSFORM is
+specified and the variable list includes strings, SEQUENTIAL will be used
+for those variables.</li>
+</ul>
+
+<p>System-missing values are treated as the same value across cases, and for
+TRANSFORM, the new value will also be system missing.</p>
+
+<p><strong>MAXRVALUES</strong>, which applies only to the RANDOM method, can be a single integer
+applied to all variables or a list of as many integers as there are variables being
+anonymized.  For string variables, the range is further limited by the declared
+string width.</p>
+
+<p>TRANSFORM and SEQUENTIAL will produce unique values as long as, in the case
+of SEQUENTIAL with string variables, the field is wide enough.  For RANDOM,
+you can specify a list of one or more variables as ONETOONE, which will
+generate unique values if that is possible.  If unique values cannot be generated, the
+procedure will stop with an error message.  Using ONETOONE increases the time and
+memory requirements.</p>
+
+<p>For repeatability, you can specify a numerical value for <strong>SEED</strong> that will produce the
+same results if the syntax is rerun at a later time with the same inputs.</p>
+
+<p>If the variable is a string, <strong>SVALUEROOT</strong> can specify a string to be prefixed
+to the new integer values if the string is wide enough.</p>
+
+<p>If <strong>NAMEROOT</strong> is specified, the variables will be renamed to the form
+<em>xxxnnn</em>
+where <em>xxx</em> is the NAMEROOT value and <em>nnn</em> is an integer.</p>
+
+<h2>SAVE</h2>
+
+<p>The SAVE parameters create text files containing the mapping of variable names,
+if any, and old and new values.  The new-values file is in csv format.
+The new values are listed alphabetically by the new
+value within variable for ease of lookup.  As explained above, the inverse mapping 
+is sometimes not unique.</p>
+
+<p>A new-values file can be used as input in a later run by specifying it in
+<strong>MAPPING</strong> if the method is SEQUENTIAL or RANDOM.  If given, any variable mappings defined in 
+that file are applied to the input values before applying the chosen method.
+This means that previously encountered values are mapped the same way
+as they were previously.  However, if MAXRVALUE is different or the string
+width is different, the results are undefined.</p>
+
+<p>There are side effects to this command.  Value labels and missing value definitions
+are cleared, since they no longer apply.  You can anonymize date-format variables, but the
+resulting values will usually not display as the values are not in the valid range for dates.
+Changing the variable type to numeric will allow the values to display.</p>
+
+<p>/HELP displays this help and does nothing else.</p>
+
+</body>
+
+</html>
+
