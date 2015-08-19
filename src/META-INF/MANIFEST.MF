@@ -1,0 +1,16 @@
+Name: SPSSINC ANON
+Dialog-Specs: SPSSINC_ANON.spd
+Command-Specs: SPSSINC_ANON.xml
+Code-Files: SPSSINC_ANON.py
+Misc-Files: markdown.html,extsyntax.css,IBMdialogicon.png
+Summary: Anonymize variables and data
+Description: This command replaces the values of the specified variabl
+ es with new values according to one of three methods.  It is intended
+  for situations where the true values must be concealed for privacy o
+ r other reasons.  It can also replace the variables names with anonym
+ ous equivalents.
+Author: JKP, IBM SPSS
+Version: 1.0.4
+Product-Version: 18
+Plugins: Python
+Translation-Catalogues: lang
