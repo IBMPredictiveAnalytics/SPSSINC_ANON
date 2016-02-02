@@ -1,11 +1,11 @@
 # SPSSINC ANON
 ## Anonymize variables and data
- This command replaces the values of the specified variabl
+ This command replaces the values of the specified variables with new values according to one of three methods.  It is intended for situations where the true values must be concealed for privacy or other reasons.  It can also replace the variables names with anonymous equivalents.
 
 ---
 Requirements
 ----
-- IBM SPSS Statistics 18 or later
+- IBM SPSS Statistics 18 or later and the corresponding IBM SPSS Statistics-Integration Plug-in for Python.
 
 ---
 Installation intructions
