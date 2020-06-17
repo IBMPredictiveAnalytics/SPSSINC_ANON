@@ -1,10 +1,10 @@
-from __future__ import with_statement
+
 #/***********************************************************************
 # * Licensed Materials - Property of IBM 
 # *
 # * IBM SPSS Products: Statistics Common
 # *
-# * (C) Copyright IBM Corp. 1989, 2013
+# * (C) Copyright IBM Corp. 1989, 2020
 # *
 # * US Government Users Restricted Rights - Use, duplication or disclosure
 # * restricted by GSA ADP Schedule Contract with IBM Corp. 
@@ -94,7 +94,7 @@ Changing the variable type to numeric will allow the values to display.
 """
 import spss, spssaux
 from extension import Template, Syntax, processcmd
-import sys, random, re, codecs, csv, cStringIO
+import sys, random, re, codecs, csv, io
 from operator import itemgetter
 
 #try:
@@ -175,7 +175,7 @@ def anon(varnames, nameroot=None, svalueroot='', method='sequential',
         trflist = [Tvar(allvariables[vn], svalueroot, method, offset, 
             scale, maxrvalue[i], vn in onetoone) for i, vn in enumerate(varnums)]
         mapinputs(trflist, mapping)  #initialize mappings if input mapping given
-        todo = zip(varnums, trflist)
+        todo = list(zip(varnums, trflist))
 
         for i, case in enumerate(ds.cases):
             for vnum, t in todo:
@@ -210,7 +210,7 @@ def anon(varnames, nameroot=None, svalueroot='', method='sequential',
                 basenum += 1
             if namemapping:
                 f.close()
-                print "Variable name mappings written to file: %s" % namemapping
+                print("Variable name mappings written to file: %s" % namemapping)
         ds.close()
         
         # write file of value mappings for each mapped variable in csv format
@@ -222,7 +222,7 @@ def anon(varnames, nameroot=None, svalueroot='', method='sequential',
             for t in trflist:
                 t.write(csvout)
             f.close()
-            print "Value mappings written to file: %s" % valuemapping
+            print("Value mappings written to file: %s" % valuemapping)
 
 def mapinputs(trflist, mapping):
     """Initialize mappings from file if given and method is Random
@@ -240,7 +240,7 @@ def mapinputs(trflist, mapping):
     anonvars = dict([(t.vname, i) for i, t in enumerate(trflist)])  #mapped vars and Tvar index
     mappedvars = []
     try:
-        row = fin.next()
+        row = next(fin)
         while True:
             if len(row) != 1:
                 raise ValueError("Invalid format for mapping file")
@@ -248,7 +248,7 @@ def mapinputs(trflist, mapping):
             t = index >= 0 and trflist[index] or None
             if t:
                 mappedvars.append(t.vname)
-            row = fin.next()
+            row = next(fin)
             maxseqvalue = -1
             while len(row) > 1:
                 if t:
@@ -271,10 +271,10 @@ def mapinputs(trflist, mapping):
                     if t.onetoone:
                         t.valueset.add(row[0])
                     t.seq = maxseqvalue
-                row = fin.next()
+                row = next(fin)
 
     except StopIteration:
-        print "Mappings initialized from file: %s\nVariables:\n" % mapping + "\n".join(mappedvars)
+        print("Mappings initialized from file: %s\nVariables:\n" % mapping + "\n".join(mappedvars))
         
         
 class Tvar(object):
@@ -285,8 +285,8 @@ class Tvar(object):
         self.vtype = v.type
         self.vname = v.name
         if self.vtype > 0 and method == "transform":
-            print """Transform method cannot be used with string variables.  
-        Substituting method Sequential for variable %s""" % self.vname
+            print("""Transform method cannot be used with string variables.  
+        Substituting method Sequential for variable %s""" % self.vname)
             self.method = "sequential"
         if method == 'transform' and (offset is None or scale is None):
             raise ValueError("TRANSFORM method requires OFFSET and SCALE to be specified.")
@@ -369,7 +369,7 @@ class Tvar(object):
 
     def up(self, rn, trailingdigits):
         if trailingdigits is None:
-            for i in xrange(rn + 1, self.maxrvalue+1):
+            for i in range(rn + 1, self.maxrvalue+1):
                 if not i in self.valueset:
                     self.valueset.add(i)
                     return i
@@ -378,7 +378,7 @@ class Tvar(object):
             rnn = int(trailingdigits)
             prefixlen = len(rn) - len(trailingdigits)
             root = rn[:prefixlen]
-            for i in xrange(rnn+1, self.maxrvalue+1):
+            for i in range(rnn+1, self.maxrvalue+1):
                 trialvalue = (root + str(i))[-self.vtype:]
                 if not trialvalue in self.valueset:
                     self.valueset.add(trialvalue)
@@ -387,7 +387,7 @@ class Tvar(object):
     
     def down(self, rn, trailingdigits):
         if trailingdigits is None:
-            for i in xrange(rn-1, -1,-1):
+            for i in range(rn-1, -1,-1):
                 if not i in self.valueset:
                     self.valueset.add(i)
                     return i
@@ -396,7 +396,7 @@ class Tvar(object):
             rnn = int(trailingdigits)
             prefixlen = len(rn) - len(trailingdigits)
             root = rn[:prefixlen]
-            for i in xrange(rnn-1, -1, -1):
+            for i in range(rnn-1, -1, -1):
                 trialvalue = (root + str(i))[-self.vtype:]
                 if not trialvalue in self.valueset:
                     self.valueset.add(trialvalue)
@@ -420,9 +420,9 @@ class Tvar(object):
         """
         #f.write("**Variable: %s%s" % (self.vname, lineend))
         f.writerow([self.vname])
-        for k, v in sorted(self.table.iteritems(), key=itemgetter(1)):
+        for k, v in sorted(iter(self.table.items()), key=itemgetter(1)):
             #f.write("%s\t=%s%s" %(v, k, lineend))
-            f.writerow([unicode(v), "=", unicode(k)])
+            f.writerow([str(v), "=", str(k)])
             
             
 class UnicodeWriter:
@@ -433,7 +433,7 @@ class UnicodeWriter:
 
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = io.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()
@@ -460,7 +460,7 @@ class UTF8Recoder:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         return self.reader.next().encode("utf-8")
 
 class UnicodeReader:
@@ -473,9 +473,9 @@ class UnicodeReader:
         f = UTF8Recoder(f, encoding)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
-        row = self.reader.next()
-        return [unicode(s, "utf-8") for s in row]
+    def __next__(self):
+        row = next(self.reader)
+        return [str(s, "utf-8") for s in row]
 
     def __iter__(self):
         return self
@@ -485,7 +485,7 @@ class UnicodeReader:
 def Run(args):
     """Execute the SPSSINC ANON extension command"""
 
-    args = args[args.keys()[0]]
+    args = args[list(args.keys())[0]]
 
     oobj = Syntax([
         Template("VARIABLES", subc="",  ktype="existingvarlist", var="varnames", islist=True),
@@ -505,7 +505,7 @@ def Run(args):
         Template("HELP", subc="", ktype="bool")])
     
     # A HELP subcommand overrides all else
-    if args.has_key("HELP"):
+    if "HELP" in args:
         #print helptext
         helper()
     else:
@@ -518,7 +518,7 @@ def attributesFromDict(d):
     # based on Python Cookbook, 2nd edition 6.18
 
     self = d.pop('self')
-    for name, value in d.iteritems():
+    for name, value in d.items():
         setattr(self, name, value)
         
 def helper():
@@ -535,7 +535,7 @@ def helper():
     # webbrowser.open seems not to work well
     browser = webbrowser.get()
     if not browser.open_new(helpspec):
-        print("Help file not found:" + helpspec)
+        print(("Help file not found:" + helpspec))
 try:    #override
     from extension import helper
 except:
