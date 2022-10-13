@@ -1,4 +1,5 @@
 Name: SPSSINC ANON
+Display-Name: Anonymize Variables and Data
 Dialog-Specs: SPSSINC_ANON.spd
 Command-Specs: SPSSINC_ANON.xml
 Code-Files: SPSSINC_ANON.py
